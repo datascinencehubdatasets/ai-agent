@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { MessageBubble } from './MessageBubble';
 import { VoiceInput } from './VoiceInput';
 import { TypingIndicator } from './TypingIndicator';
+import { ExampleQueries } from './ExampleQueries';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -60,16 +61,7 @@ export const ChatInterface = () => {
         <div className="max-w-5xl mx-auto w-full h-full">
           <div className="p-4 space-y-6">
             {messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center py-20 px-4">
-                <div className="max-w-md">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                    Welcome to Zaman AI Assistant
-                  </h2>
-                  <p className="text-gray-600">
-                    Your personal Islamic finance expert. Ask me anything about Islamic finance principles, investment options, or financial planning.
-                  </p>
-                </div>
-              </div>
+              <ExampleQueries onQueryClick={handleSendMessage} />
             ) : (
               <>
                 {messages.map((msg, idx) => (
