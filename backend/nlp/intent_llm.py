@@ -56,7 +56,7 @@ class LLMIntentClassifier:
         )
         self.model = settings.INTENT_MODEL
 
-    def predict(self, text: str, language: str | None = None) -> Dict:
+    def predict(self, text: str, language: str | None = None, session_messages: Optional[List[Dict]] = None) -> Dict:
         if not text or not text.strip():
             return {"intent":"general_knowledge","confidence":0.1,"matched_reasons":[],"llm":self.model}
 
