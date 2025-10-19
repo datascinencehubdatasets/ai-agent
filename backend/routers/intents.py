@@ -11,7 +11,7 @@ clf = LLMIntentClassifier()
 class IntentRequest(BaseModel):
     text: str = Field(..., min_length=1)
     language: str | None = None
-    session_id: str | None = Field(default="default")   # <-- NEW
+    session_id: str | None = Field(default="default")   
 
 class IntentResponse(BaseModel):
     intent: str

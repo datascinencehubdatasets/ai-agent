@@ -1,12 +1,14 @@
+from __future__ import annotations
 from typing import Any, Dict
-from backend.rag.retriever import Retriever
 from openai import OpenAI
 import httpx
+
+from backend.rag.retriever import Retriever
 from backend.utils.settings import settings
 
 RAG_SYSTEM_PROMPT = """You are a helpful assistant for banking & Islamic finance FAQs.
 Use ONLY the provided context. If the answer is not in context, say you don't have that info and ask a clarifying question."""
- 
+
 class GeneralAgent:
     name = "general_knowledge"
 
@@ -23,25 +25,23 @@ class GeneralAgent:
 
     def run(self, query: str, context: Dict[str, Any] | None = None) -> Dict[str, Any]:
         history = (context or {}).get("history") or []
-
-        from backend.nlp.intent_llm import summarize_history
-        history_note = summarize_history(history, max_chars=600)
-
-        hits = self.retriever.retrieve(query if not history_note else f"{history_note}\n\ncurrent: {query}")
+        hits = self.retriever.retrieve(query, history=history)
         ctx = self.retriever.format_context(hits)
 
         messages = [
             {"role": "system", "content": RAG_SYSTEM_PROMPT},
             {"role": "system", "content": f"CONTEXT:\n{ctx or '(no relevant context)'}"},
-            {"role": "system", "content": f"RECENT TURNS:\n{history_note}" if history_note else "RECENT TURNS: (none)"},
             {"role": "user", "content": query},
         ]
         resp = self.client.chat.completions.create(
-            model=self.model, temperature=0.2,
-            messages=messages
+            model=self.model, temperature=0.2, messages=messages
         )
         answer = resp.choices[0].message.content.strip()
+
         return {
             "answer": answer,
-            "used_docs": [{"source": h["meta"].get("source"), "chunk": h["meta"].get("chunk"), "score": h["score"]} for h in hits]
+            "used_docs": [
+                {"source": h.get("meta", {}).get("source"), "chunk": h.get("meta", {}).get("chunk"), "score": h.get("score")}
+                for h in hits
+            ]
         }

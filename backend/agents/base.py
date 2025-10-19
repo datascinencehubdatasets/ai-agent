@@ -6,7 +6,6 @@ class BaseAgent(ABC):
 
     @abstractmethod
     def run(self, query: str, context: Dict[str, Any] | None = None) -> Dict[str, Any]:
-        """Возвращает словарь формата: {'answer': str, ...}"""
         raise NotImplementedError
 
 def make_agent(intent: str) -> BaseAgent:
