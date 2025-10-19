@@ -21,20 +21,20 @@ interface ExampleQueriesProps {
 export const ExampleQueries = ({ onQueryClick }: ExampleQueriesProps) => {
   const exampleQueries = [
     {
-      title: "What is Murabaha financing?",
-      description: "Learn about Islamic profit-based financing structure"
+      title: "Какая ожидаемая доходность по \"Вакала Zaman\" и на какие сроки доступен депозит? Можно ли пополнять после открытия?",
+      description: "Узнайте о доходности и условиях депозита Vakala Zaman"
     },
     {
-      title: "Explain Sukuk investments",
-      description: "Discover Islamic alternatives to conventional bonds"
+      title: "Сколько стоит обслуживание: выпуск, первый год, со второго года? На какой срок выпускается карта?",
+      description: "Информация о стоимости обслуживания и сроках действия карт"
     },
     {
-      title: "How does Islamic insurance work?",
-      description: "Understanding Takaful and its principles"
+      title: "Что такое наценка в исламском банкинге и почему это не проценты (риба)? Почему она фиксирована?",
+      description: "Понимание концепции наценки в исламском финансировании"
     },
     {
-      title: "What is Riba?",
-      description: "Learn about the prohibition of interest in Islamic finance"
+      title: "Я ИП: хочу открыть точку на 10 000 000 ₸. Сравни ежемесячные платежи на 36 vs 60 мес и сформируй список документов/шагов.",
+      description: "Расчет платежей и необходимые документы для открытия точки ИП"
     }
   ];
 
@@ -48,7 +48,7 @@ export const ExampleQueries = ({ onQueryClick }: ExampleQueriesProps) => {
           Your personal Islamic finance expert. Ask me anything about Islamic finance principles, investment options, or financial planning.
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 max-w-6xl mx-auto">
         {exampleQueries.map((query, index) => (
           <QueryCard
             key={index}

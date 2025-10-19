@@ -7,17 +7,9 @@ from backend.utils.logger import get_logger
 log = get_logger("reranker")
 
 class Reranker:
-    """
-    Обёртка над /rerank вашего хаба.
-    Ожидаемый контракт (типовой для подобных сервисов):
-      POST {base}/rerank
-      body: { "query": str, "documents": [str], "top_k": int, "model": str? }
-      resp: { "results": [ { "index": int, "score": float }, ... ] }
-    Если эндпоинт/схема отличается — отловим исключение и тихо вернём None.
-    """
 
     def __init__(self, base_url: Optional[str] = None, api_key: Optional[str] = None, timeout: Optional[int] = None):
-        # у нас settings.OPENAI_BASE_URL указывает на .../v1, а rerank обычно живёт вне /v1
+
         base = (base_url or settings.OPENAI_BASE_URL).rstrip("/")
         self.base_url = base[:-3] if base.endswith("/v1") else base
         self.api_key = api_key or settings.OPENAI_API_KEY
@@ -40,7 +32,7 @@ class Reranker:
             r.raise_for_status()
             data = r.json()
             results = data.get("results") or data.get("data") or []
-            # ожидаем элементы вида {"index": idx, "score": float}
+
             normalized = []
             for item in results:
                 idx = item.get("index")

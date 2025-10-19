@@ -9,7 +9,6 @@ class BaseAgent(ABC):
         """Возвращает словарь формата: {'answer': str, ...}"""
         raise NotImplementedError
 
-# Фабрика агентов — по имени интента
 def make_agent(intent: str) -> BaseAgent:
     from .goal_agent import GoalAgent
     from .analytics_agent import AnalyticsAgent

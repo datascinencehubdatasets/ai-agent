@@ -4,11 +4,6 @@ import os, json, uuid
 import numpy as np
 
 class LocalVectorStore:
-    """
-    Простейшее файловое хранилище:
-      - метаданные/документы: JSONL (по строке на запись)
-      - матрица эмбеддингов: .npy
-    """
     def __init__(self, dir_path: str = "data/embeddings"):
         self.dir = dir_path
         os.makedirs(self.dir, exist_ok=True)
@@ -62,7 +57,6 @@ class LocalVectorStore:
         V = self._emb
         q = np.array(query_vec, dtype=np.float32)
 
-        # косинусная близость
         Vn = V / (np.linalg.norm(V, axis=1, keepdims=True) + 1e-12)
         qn = q / (np.linalg.norm(q) + 1e-12)
         sims = Vn @ qn

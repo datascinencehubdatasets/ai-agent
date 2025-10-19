@@ -47,30 +47,27 @@ class Retriever:
         self.reranker = Reranker() if self.use_rerank else None
 
     def retrieve(self, query: str) -> List[Dict[str, Any]]:
-        # 1) векторный поиск (быстрый и дешёвый черновой recall)
+
         qv = self.embedder.encode([query])[0]
-        initial = self.store.search(qv, top_k=max(self.top_k, 8))   # берём чуть больше на вход rerank
+        initial = self.store.search(qv, top_k=max(self.top_k, 8))   
         if not initial:
             return []
 
-        # 2) фильтр по порогу до rerank (слабый, чтобы не потерять кандидатов)
         prefiltered = [d for d in initial if d.get("score", 0.0) >= max(self.min_score * 0.75, 0.05)]
         candidates = prefiltered or initial
 
-        # 3) (опц.) rerank
         if self.reranker:
             docs = [c["text"] for c in candidates]
             ranking = self.reranker.rerank(query, docs, top_k=self.top_k)
             if ranking:
-                # собрать выдачу по новому порядку
+
                 ordered: List[Dict[str, Any]] = []
                 for r in ranking:
-                    item = dict(candidates[r["index"]])  # копия
+                    item = dict(candidates[r["index"]])  
                     item["rerank_score"] = r["score"]
                     ordered.append(item)
                 return ordered[: self.top_k]
 
-        # 4) без rerank — просто отсечь по косинусу и топ-k
         return candidates[: self.top_k]
 
     @staticmethod

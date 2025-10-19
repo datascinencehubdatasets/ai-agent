@@ -1,46 +1,37 @@
 'use client';
 
-import { useState } from 'react';
-import { MessageBubble } from './MessageBubble';
-import { VoiceInput } from './VoiceInput';
-import { TypingIndicator } from './TypingIndicator';
+import { useState, useCallback } from 'react';
 import { ExampleQueries } from './ExampleQueries';
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
+import { ChatWindow } from './ChatWindow';
+import { TechPanel } from './TechPanel';
+import { useChat } from '@/hooks/useChat';
 
 export const ChatInterface = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // Генерируем простой session_id для демо. В реальном приложении его нужно получать из авторизации/контекста
+  const sessionId = typeof window !== 'undefined' ?
+    window.localStorage.getItem('chat_session_id') ||
+    `user-${Date.now().toString(36)}` : 'default';
 
-  const handleSendMessage = async (message: string) => {
-    setIsLoading(true);
-    // Add user message to chat
-    setMessages([...messages, { role: 'user', content: message }]);
-    
-    try {
-      // Send message to backend
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
-      });
-      
-      const data = await response.json();
-      
-      // Add AI response to chat
-      setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
-    } catch (error) {
-      console.error('Error sending message:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  if (typeof window !== 'undefined' && !window.localStorage.getItem('chat_session_id')) {
+    window.localStorage.setItem('chat_session_id', sessionId);
+  }
+
+  const chat = useChat('ru', sessionId);
+
+  // TechPanel state
+  const [isTechPanelVisible, setIsTechPanelVisible] = useState(true);
+  const [techPanelWidth, setTechPanelWidth] = useState(320);
+
+  const handleTechPanelToggle = useCallback((visible: boolean) => {
+    setIsTechPanelVisible(visible);
+  }, []);
+
+  const handleTechPanelWidthChange = useCallback((width: number) => {
+    setTechPanelWidth(width);
+  }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-white">
       {/* Header */}
       <div className="flex items-center px-6 py-3 bg-white border-b">
         <div className="flex-1 flex items-center justify-between max-w-5xl mx-auto w-full">
@@ -50,35 +41,33 @@ export const ChatInterface = () => {
               Online
             </span>
           </div>
-          <div className="text-sm text-gray-600">
-            Islamic Finance Expert
-          </div>
+          <div className="text-sm text-gray-600">Islamic Finance Expert</div>
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto w-full h-full">
-          <div className="p-4 space-y-6">
-            {messages.length === 0 ? (
-              <ExampleQueries onQueryClick={handleSendMessage} />
-            ) : (
-              <>
-                {messages.map((msg, idx) => (
-                  <MessageBubble key={idx} role={msg.role} content={msg.content} />
-                ))}
-              </>
-            )}
-            {isLoading && <TypingIndicator />}
-          </div>
-        </div>
-      </div>
-      
-      {/* Input Area */}
-      <div className="border-t bg-white">
-        <div className="max-w-5xl mx-auto w-full px-4 py-4">
-          <VoiceInput onSend={handleSendMessage} />
-        </div>
+      <div className="flex-1 flex justify-center overflow-hidden">
+        <main className={`flex-1 ${isTechPanelVisible ? '' : 'mr-0'}`}>
+          <ChatWindow
+            messages={chat.messages}
+            inputValue={chat.inputValue}
+            setInputValue={chat.setInputValue}
+            language={chat.language}
+            setLanguage={chat.setLanguage}
+            isSending={chat.isSending}
+            send={chat.send}
+            retry={chat.retry}
+            abort={chat.abort}
+            classifyIntent={chat.classifyIntent}
+          />
+        </main>
+
+        <TechPanel
+          data={chat.messages.slice().reverse().find(m => m.role === 'assistant')?.meta as any}
+          isVisible={isTechPanelVisible}
+          width={techPanelWidth}
+          onToggle={handleTechPanelToggle}
+          onWidthChange={handleTechPanelWidthChange}
+        />
       </div>
     </div>
   );

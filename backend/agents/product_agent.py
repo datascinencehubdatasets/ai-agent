@@ -23,12 +23,18 @@ class ProductAgent:
         self.model = "gpt-4o-mini"
 
     def run(self, query: str, context: Dict[str, Any] | None = None) -> Dict[str, Any]:
-        hits = self.retriever.retrieve(query)
+        history = (context or {}).get("history") or []
+
+        from backend.nlp.intent_llm import summarize_history
+        history_note = summarize_history(history, max_chars=600)
+
+        hits = self.retriever.retrieve(query if not history_note else f"{history_note}\n\ncurrent: {query}")
         ctx = self.retriever.format_context(hits)
 
         messages = [
             {"role": "system", "content": RAG_SYSTEM_PROMPT},
             {"role": "system", "content": f"CONTEXT:\n{ctx or '(no relevant context)'}"},
+            {"role": "system", "content": f"RECENT TURNS:\n{history_note}" if history_note else "RECENT TURNS: (none)"},
             {"role": "user", "content": query},
         ]
         resp = self.client.chat.completions.create(

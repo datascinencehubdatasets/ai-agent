@@ -1,9 +1,11 @@
 from typing import Dict, List
 from openai import OpenAI
+import json
 import httpx
 from ..utils.settings import settings
 from ..utils.logger import get_logger
 from .intent_regex import fallback_predict
+from typing import Dict, List, Optional
 
 log = get_logger("intent-llm")
 
@@ -44,6 +46,22 @@ FEW_SHOTS = [
     {"role": "user", "content": "Что такое мурабаха в исламском финансировании?"},
     {"role": "assistant", "content": '{"intent":"general_knowledge","confidence":0.85,"matched_reasons":["исламское финансирование","термин"]}'},
 ]
+def summarize_history(messages: List[Dict], max_chars: int = 800) -> str:
+    """
+    Грубая сводка истории: берем последние N сообщений user/assistant и компактно формируем контекст,
+    без длинных ответов (обрезаем).
+    """
+    if not messages: return ""
+    lines = []
+    for m in messages[-10:]:  # последние 10
+        role = m["role"]
+        content = (m.get("content") or "").strip().replace("\n"," ")
+        if not content: continue
+        if len(content) > 200: content = content[:200] + "…"
+        if role in ("user","assistant"):
+            lines.append(f"{role}: {content}")
+    s = "\n".join(lines)
+    return s[:max_chars]
 
 class LLMIntentClassifier:
     def __init__(self):
@@ -61,7 +79,12 @@ class LLMIntentClassifier:
             return {"intent":"general_knowledge","confidence":0.1,"matched_reasons":[],"llm":self.model}
 
         try:
-            messages = [{"role":"system","content": SYSTEM_PROMPT}]
+            history_note = summarize_history(session_messages or [])
+            history_block = f"\n\nConversation history (recent turns):\n{history_note}" if history_note else ""
+
+            system = SYSTEM_PROMPT + history_block
+
+            messages = [{"role":"system","content": system}]
             messages += FEW_SHOTS
             messages.append({"role":"user","content": text})
 
@@ -71,9 +94,7 @@ class LLMIntentClassifier:
                 response_format={"type":"json_object"},
                 messages=messages
             )
-            # OpenAI python SDK v1.x: content строковый JSON, parsed недоступен всегда
             raw = resp.choices[0].message.content
-            import json
             data = json.loads(raw)
 
             intent = data.get("intent","general_knowledge")
